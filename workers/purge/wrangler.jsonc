@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "stream-purge",
+  "main": "index.ts",
+  "compatibility_date": "2026-07-31",
+  "compatibility_flags": ["nodejs_compat"],
+  // Hourly. Free links carry a 7-day TTL (§6), so the exact minute never
+  // matters — what matters is that expired bytes stop being billed the same day.
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stream",
+      "database_id": "5486e6e5-fbf0-4c52-90f2-aa258dd87639"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "VIDEOS",
+      "bucket_name": "stream-videos"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

@@ -8,24 +8,23 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  // Uncomment and create resources when wiring Phase 1:
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "stream",
-  //     "database_id": "<replace-after-wrangler-d1-create>"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "VIDEOS",
-  //     "bucket_name": "stream-videos"
-  //   }
-  // ],
-  // "triggers": {
-  //   "crons": [
-  //     "0 3 * * *",
-  //     "0 * * * *"
-  //   ]
-  // }
+  // No `vars` block on purpose. This file is committed, so GOOGLE_CLIENT_SECRET
+  // and SESSION_SECRET go in through `wrangler secret put NAME` instead; both
+  // arrive as `process.env.NAME` either way. See .env.example for the full list.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stream",
+      "database_id": "5486e6e5-fbf0-4c52-90f2-aa258dd87639",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "VIDEOS",
+      "bucket_name": "stream-videos"
+    }
+  ]
+  // No `triggers` here on purpose: the §6.2 purge runs as its own Worker so a
+  // cron change cannot break the app deploy. See `workers/purge/wrangler.jsonc`.
 }
