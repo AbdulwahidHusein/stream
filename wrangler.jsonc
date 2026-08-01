@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stream",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-07-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Uncomment and create resources when wiring Phase 1:
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "stream",
+  //     "database_id": "<replace-after-wrangler-d1-create>"
+  //   }
+  // ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "VIDEOS",
+  //     "bucket_name": "stream-videos"
+  //   }
+  // ],
+  // "triggers": {
+  //   "crons": [
+  //     "0 3 * * *",
+  //     "0 * * * *"
+  //   ]
+  // }
+}

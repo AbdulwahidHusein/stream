@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Cool stone + deep ink + decisive teal — not purple SaaS defaults */
+  --bg: #eef1f4;
+  --bg-elevated: #f7f8fa;
+  --ink: #0b1220;
+  --ink-muted: #4a5568;
+  --line: #d5dbe3;
+  --accent: #0f6e6a;
+  --accent-hover: #0c5855;
+  --danger: #b42318;
+  --record: #c81e1e;
+
+  --font-display: var(--font-syne), ui-sans-serif, sans-serif;
+  --font-sans: var(--font-sora), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+
+  --radius: 2px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--danger);
+  --color-record: var(--record);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    height: 100%;
+  }
+
+  body {
+    min-height: 100%;
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(15, 110, 106, 0.08), transparent 55%),
+      radial-gradient(900px 500px at -10% 100%, rgba(11, 18, 32, 0.06), transparent 50%),
+      var(--bg);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 28%, white);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes record-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+.animate-record-pulse {
+  animation: record-pulse 1.6s ease-in-out infinite;
 }

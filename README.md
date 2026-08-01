@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stream (`stream.et`)
 
-## Getting Started
+Async screen recording for Ethiopian freelancers, agencies, and remote teams. Record in the browser, get an instant shareable link, pay in **ETB** via Telebirr / CBE Birr.
 
-First, run the development server:
+Product brief: [`idea.txt`](./idea.txt)  
+Technical spec: [`TECHNICAL_SPEC.md`](./TECHNICAL_SPEC.md) (v0.2)
+
+## Stack
+
+| Layer | Choice |
+| --- | --- |
+| App | Next.js (App Router) + TypeScript |
+| UI | Tailwind CSS v4 + CSS design tokens |
+| Host | Cloudflare Workers via `@opennextjs/cloudflare` |
+| DB | Cloudflare D1 + Drizzle ORM |
+| Video | Cloudflare R2 (progressive multipart upload) |
+| Auth | Magic link (Phase 1) |
+| Pay | WeBirr / Telebirr (Phase 1) |
+
+Designed to stay near **$0 infra** until usage outgrows Cloudflare free tiers (R2 10 GB is the binding constraint).
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy env template:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+### Cloudflare preview / deploy
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm preview   # build + wrangler-local Workers runtime
+pnpm deploy    # build + deploy to Cloudflare Workers
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create D1 / R2 bindings in `wrangler.jsonc` when starting Phase 1 storage work.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Repo layout
 
-## Deploy on Vercel
+```
+app/           routes (landing, record, library, playback, embed, api)
+components/    UI by domain
+lib/           plans, auth, db, r2, recorder, billing
+workers/       cron jobs (purge, downgrade, usage)
+TECHNICAL_SPEC.md
+idea.txt
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Status
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Scaffold + design shell. Next: Phase 0 landing/validation and Phase 1 recorder → progressive R2 upload → share link.

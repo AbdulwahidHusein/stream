@@ -1,0 +1,148 @@
+Stream
+stream.et — Async Screen Recording for Ethiopian Freelancers, Agencies & Remote Teams
+Product Requirements Document — v0.1 (Draft for Validation)
+Prepared for: Abdul  |  Date: August 1, 2026
+Table of Contents
+
+
+
+1. Executive Summary
+Stream (stream.et) is a lightweight, browser-based async screen and webcam recording tool, positioned as a Loom alternative built specifically for Ethiopian freelancers, agencies, dev teams, and support/BPO organizations who work with remote or international clients. Users record their screen and/or webcam directly in the browser and receive an instant shareable link — no downloads, no accounts required to view.
+The product's core differentiator is not the recording technology itself, which is a solved problem, but billing: Stream is priced and billed in Ethiopian Birr (ETB) through local payment rails (Telebirr, CBE Birr), removing the friction Ethiopian users currently face paying USD-denominated international SaaS subscriptions.
+This document describes the problem, target users, product scope, technical approach, competitive landscape, business model, and the validation steps that should happen before committing to a full build. Notably, a February 2026 change to Ethiopia's forex directive (FXD/04/2026) has begun easing access to international-capable cards, which narrows this wedge over time — the validation plan in Section 9 is designed specifically to test whether the pain point still holds today.
+2. Problem Statement
+Screen recording tools like Loom, Cap, and Screen Studio are the default way remote-first teams communicate asynchronously: bug reports, client feedback, product walkthroughs, and sales demos. Ethiopian freelancers and agencies serving international clients increasingly need the same workflow, but face two compounding frictions:
+    • Billing friction: nearly all competitors bill exclusively in USD via recurring card charges. Historically, Ethiopian banks (CBE, Awash, and others) have struggled to reliably clear recurring international SaaS charges, even where a foreign-currency account exists.
+    • Workaround costs: many users currently rely on virtual USD cards, relatives abroad, or informal workarounds to pay for tools like Loom — all of which add cost, delay, or account risk (failed renewals, service interruption).
+    • Default fallback to chat apps: absent a good local option, many people just record with a phone or built-in tool and send the raw file over Telegram or WhatsApp. This works for casual sharing but breaks down for professional use: video compression makes UI text unreadable, files aren't embeddable in tickets/docs/emails, there's no library or search, and there's no signal on whether the recipient actually watched it.
+The opportunity is not "build a better recorder" — recording technology is commoditized. It is “remove the payment and professionalism friction for the specific segment that has outgrown chat-app file sharing but is blocked from paying for the incumbent tools.”
+3. Target Market & Users
+Primary segments
+    • Freelancers and small agencies doing remote/outsourced client work (design, dev, marketing) who need to send walkthroughs, bug reports, and revision feedback to clients abroad.
+    • Local software/dev teams using async video for code review, standups, and QA reports instead of live meetings.
+    • BPO and outsourcing firms (a growing sector in Ethiopia) that produce training material and support documentation for remote clients.
+    • Customer support teams needing to send visual walkthroughs to customers instead of long text instructions.
+Explicitly not the target (at launch)
+    • Casual consumer use (friends/family sharing clips) — WhatsApp/Telegram already serve this well and there is no wedge to compete on.
+    • Live video conferencing — served well by Google Meet/Zoom; a separate idea previously scoped and deprioritized for this domain.
+4. Product Overview
+Stream is an async, link-based recording tool. There is no live/real-time component and no peer-to-peer signaling infrastructure — this keeps hosting costs low and avoids the NAT-traversal/TURN-server costs that a live video product would require.
+Core user flow
+    • User opens stream.et and clicks “Record.”
+    • Browser requests screen (getDisplayMedia) and/or webcam (getUserMedia) permission.
+    • Recording happens locally in-browser via the MediaRecorder API.
+    • On stop, the recording uploads to object storage and the user immediately receives a shareable link.
+    • Recipient opens the link in any browser — no account or app installation required — and watches the video on a simple playback page.
+    • The sender's dashboard shows all past recordings (library) plus basic view analytics.
+5. MVP Feature Scope
+In scope for MVP
+    • Screen recording, webcam recording, and screen + webcam bubble overlay (matching the format users already expect from Loom).
+    • One-click instant shareable link generation; link copy button.
+    • Recording library/dashboard (list of past recordings, thumbnails, delete/rename).
+    • Basic playback page: play/pause, scrub, playback speed.
+    • Mute/camera-off toggles during recording; simple dark-mode recording UI.
+    • ETB billing integration via a local payment gateway (WeBirr or direct Telebirr/CBE Birr integration) for the paid tier.
+Explicitly out of scope for MVP (candidates for v2+)
+    • Viewer-level analytics beyond basic view counts (e.g., drop-off heatmaps, timestamped comments) — valuable but adds complexity; targeted for v1.1.
+    • Team workspaces with shared folders and roles.
+    • Mobile app (mobile web recording support is a stretch goal, not a requirement, given getDisplayMedia support varies by mobile browser).
+    • Video editing/trimming beyond basic start/end trim.
+6. Technical Approach
+Why this is a small-to-medium build
+Unlike a live video-call product (which requires STUN/TURN infrastructure for NAT traversal and doesn't scale past small group calls without an SFU), an async recorder has no real-time component. The recording happens entirely client-side; the server's only job is to store a file and serve it back. This removes the most expensive and fragile part of building on WebRTC.
+Suggested stack
+    • Frontend: HTML/CSS + vanilla JS or a lightweight framework (React/Svelte); MediaRecorder + getDisplayMedia + getUserMedia for capture.
+    • Backend: minimal API (Node.js) for upload handling, link generation, and metadata (view counts, titles, ownership).
+    • Storage: Cloudflare R2 or Backblaze B2 — both are meaningfully cheaper than AWS S3 for egress-heavy video workloads, important given payments are collected in ETB while storage is billed in USD.
+    • Payment integration: WeBirr (or equivalent aggregator) to accept Telebirr and CBE Birr payments without building direct bank integrations from scratch.
+    • Hosting: Vercel/Render/Railway free-to-low-cost tiers are sufficient at MVP scale.
+Key technical risk
+Mobile browser support for getDisplayMedia (screen capture) is inconsistent across mobile Safari/Chrome. MVP should be positioned and tested primarily as a desktop-first tool, since the target users (freelancers, dev teams) predominantly record from desktop anyway.
+7. Competitive Landscape
+Global tools already do the core job well on features and quality. Stream does not attempt to out-feature them at launch — the wedge is currency, local payment rails, and (secondarily) being purpose-built for a segment global tools don't localize for.
+Tool
+Price
+Billing currency
+Local (ETB) billing
+Embeds outside app
+Analytics
+Loom
+$0 (free tier) / $12.50–15/mo
+USD only
+No
+Yes
+Yes
+Screen Studio
+$9–29/mo
+USD only
+No
+Limited
+No
+Cap
+$0 (self-host) / $8–12/mo
+USD only
+No
+Yes
+Limited
+Snagit
+$62.99 one-time
+USD only
+No
+No
+No
+Tella
+Free / low-cost
+USD only
+No
+Yes
+Limited
+Stream (proposed)
+Free tier / ETB paid tier
+ETB via Telebirr, CBE Birr
+Yes — core differentiator
+Yes
+Yes (MVP+1)
+
+8. Business Model & Indicative Pricing
+Pricing below is indicative and should be validated with real prospects (see Section 9) before being finalized — the goal is to price meaningfully below the effective cost of a USD workaround (virtual card fees, FX spread, failed-renewal risk) while remaining sustainable against storage/bandwidth costs.
+Tier
+Price (indicative)
+Includes
+Free
+0 ETB
+Up to 15 recordings/mo, 5-min cap per recording, 7-day link expiry, Stream watermark
+Individual
+≈ 250–350 ETB/mo
+Unlimited recordings, 25-min cap, no watermark, permanent links, basic view analytics
+Team
+≈ 800–1,200 ETB/mo (up to 5 seats)
+Shared workspace/library, unlimited length, viewer completion analytics, priority support
+
+9. Validation Plan (Before Full Build)
+The central assumption — that ETB billing removes a real, currently-felt blocker — has not yet been tested against real prospects, and a February 2026 regulatory change (see Section 10) may be narrowing this gap. Before committing to the full build, run a short, low-cost validation pass:
+    • Interview 10–15 people in the target segments (freelancers, agency owners, dev team leads, BPO staff) who currently do or would benefit from async screen recording.
+    • Ask directly: do they currently use Loom/similar tools; if not, is payment the reason; if they've worked around it, how (virtual card, relative abroad, etc.) and what did that cost them.
+    • Test willingness to pay in ETB at the indicative price points in Section 8, before writing any code beyond a clickable prototype or landing page.
+    • If most prospects say they've already solved the payment problem or are satisfied with the free tier, treat that as a signal to narrow the target segment further or reconsider the wedge, not to abandon the recorder concept outright.
+10. Risks & Open Questions
+Risk
+Why it matters
+Mitigation
+NBE forex liberalization (Directive FXD/04/2026) reduces payment friction over time
+Banks can now issue FX cards more easily; if international SaaS billing becomes routine, the core ETB-billing wedge narrows
+Validate with target users now; in practice CBE/Awash cards still rarely clear international SaaS billing as of this writing — but re-test this assumption before scaling spend
+Market size in Ethiopia may be small at launch
+Freelancers/agencies doing remote client work are a growing but still niche segment locally
+Start with a narrow beachhead (outsourcing/BPO firms, dev agencies) rather than broad consumer marketing
+Free-tier cannibalization
+Many prospects already use Loom's free tier and may not feel enough pain to switch
+Gate the free tier tightly (length/volume) and lead sales conversations with the ETB-billing angle specifically
+No live infrastructure needed keeps cost low, but storage costs scale with usage
+Video storage/bandwidth is the main variable cost as usage grows
+Use low-cost object storage (Cloudflare R2 / Backblaze B2) with egress-aware pricing; cap free-tier storage
+
+11. Suggested Roadmap
+    • Phase 0 (1–2 weeks): Validation interviews + lightweight landing page to gauge signup interest and willingness to pay.
+    • Phase 1 (2–4 weeks): MVP build — recorder, upload, playback link, library, ETB payment integration for a single paid tier.
+    • Phase 2: Basic analytics (view counts, completion), team seats, refined pricing based on Phase 0/1 data.
+    • Phase 3 (conditional): Only pursue if traction is clear — deeper analytics (drop-off, comments), workspace/team features, and expanded desktop-first mobile support.
