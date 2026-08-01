@@ -9,10 +9,10 @@ type MarketingHeaderProps = {
  */
 export function MarketingHeader({ signedIn = false }: MarketingHeaderProps) {
   return (
-    <header className="relative z-20 flex items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--panel)]/90 px-5 py-3.5 backdrop-blur-md md:px-8">
+    <header className="relative z-20 flex items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--panel)]/85 px-5 py-3.5 backdrop-blur-md md:px-8">
       <Link
         href="/"
-        className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight md:text-xl"
+        className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight transition-opacity hover:opacity-80 md:text-xl"
       >
         Stream
       </Link>

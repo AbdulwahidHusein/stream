@@ -30,6 +30,7 @@ import {
   uploadErrorDetail,
   type RecorderError,
 } from "./errors";
+import { hintCameraTrack, hintScreenTrack } from "./quality";
 import { THUMBNAIL, grabPosterFrame } from "./thumbnail";
 import type { RecordMode } from "./types";
 import {
@@ -61,6 +62,8 @@ export type RecorderPhase =
   | "review";
 
 export interface RecordingResult {
+  /** Internal id — rename / library mutations. */
+  id: string;
   publicId: string;
   title: string;
   /** Carried through so the review screen can restate what actually got encoded. */
@@ -188,6 +191,7 @@ export function useRecorder(plan: PlanId) {
         const completed = await uploader.finish(durationMs);
 
         setResult({
+          id: completed.id,
           publicId: completed.publicId,
           title: completed.title,
           mode: recordedMode,
@@ -386,6 +390,11 @@ export function useRecorder(plan: PlanId) {
         (session.mode === "camera" ? session.cameraTrack : session.screenTrack);
 
       if (!videoTrack) throw new Error("No video track available to record.");
+
+      // Tell the encoder what kind of pixels these are so it spends the bitrate
+      // budget on text (screen) vs motion (camera) instead of guessing.
+      if (session.mode === "camera") hintCameraTrack(videoTrack);
+      else hintScreenTrack(videoTrack);
 
       const mixed = mixAudioTracks(
         [session.micTrack, session.systemAudioTrack].filter(

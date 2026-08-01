@@ -29,6 +29,7 @@ export type ActionResult = { ok: true } | { ok: false; message: string };
 export async function renameRecording(
   id: string,
   rawTitle: string,
+  options?: { revalidate?: boolean },
 ): Promise<ActionResult> {
   const title = sanitizeTitle(rawTitle);
 
@@ -45,7 +46,9 @@ export async function renameRecording(
     return failure(err, "rename");
   }
 
-  refresh();
+  // Skip on the post-record wrap-up screen — refreshing the page would wipe the
+  // in-memory review state before the user copies their link.
+  if (options?.revalidate !== false) refresh();
   return { ok: true };
 }
 

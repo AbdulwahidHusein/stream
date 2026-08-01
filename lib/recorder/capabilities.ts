@@ -3,12 +3,15 @@ import type { RecordMode } from "./types";
 /**
  * Container/codec probe — TECHNICAL_SPEC.md §10.2.
  *
- * The recipient's browser matters more than the recorder's: MP4/H.264+AAC is
- * chosen first so share links play on iOS and macOS Safari with no server-side
- * transcoding (§11.4). Firefox falls through to WebM, which then owes the
- * duration fix-up in §10.4 before its scrub bar works.
+ * Prefer higher H.264 profiles when available: same bitrate budget, better
+ * detail retention on UI text. Fall through to Baseline, then VP9/VP8 WebM.
+ * The recipient's browser still matters more than the recorder's — MP4 first
+ * so share links play on Safari without server-side transcoding (§11.4).
  */
 export const MIME_CANDIDATES = [
+  // High / Main before Baseline — clearer text at the same videoBitsPerSecond.
+  "video/mp4;codecs=avc1.64001F,mp4a.40.2",
+  "video/mp4;codecs=avc1.4D401F,mp4a.40.2",
   "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
   "video/webm;codecs=vp9,opus",
   "video/webm;codecs=vp8,opus",

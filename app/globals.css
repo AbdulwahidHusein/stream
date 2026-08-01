@@ -72,6 +72,21 @@
     font: inherit;
   }
 
+  button:not(:disabled),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [type="button"]:disabled,
+  [type="submit"]:disabled,
+  [type="reset"]:disabled {
+    cursor: not-allowed;
+  }
+
   ::selection {
     background: color-mix(in srgb, var(--accent) 28%, white);
   }
@@ -182,6 +197,7 @@
   font-size: 0.9375rem;
   font-weight: 500;
   color: #fff;
+  cursor: pointer;
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -210,6 +226,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--ink);
+  cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
@@ -222,6 +239,7 @@
   color: var(--ink-muted);
   font-size: 0.875rem;
   text-underline-offset: 4px;
+  cursor: pointer;
   transition: color 0.15s ease;
 }
 
@@ -239,6 +257,7 @@
   font-size: 0.9375rem;
   font-weight: 500;
   color: var(--ink-muted);
+  cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 

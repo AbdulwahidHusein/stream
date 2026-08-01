@@ -4,6 +4,7 @@ import type { PlanId } from "@/lib/plans";
 import { modeInfo } from "@/lib/recorder/types";
 import { useRecorder } from "@/lib/recorder/use-recorder";
 import { Controls } from "./controls";
+import { FinishingPanel } from "./finishing-panel";
 import { ModeSelect } from "./mode-select";
 import { PreviewStage } from "./preview-stage";
 import { ReviewPanel } from "./review-panel";
@@ -48,38 +49,39 @@ export function Recorder({
   const recorder = useRecorder(plan);
   const { phase, mode } = recorder;
 
-  const inSession =
+  const liveSession =
     mode !== null &&
-    (phase === "ready" ||
-      phase === "starting" ||
-      phase === "recording" ||
-      phase === "finalizing");
+    (phase === "ready" || phase === "starting" || phase === "recording");
 
   const choosing = phase === "idle" || phase === "preparing";
   const step: 1 | 2 | 3 =
-    phase === "preparing" ? 2 : choosing ? 1 : phase === "review" ? 3 : 3;
+    phase === "preparing" ? 2 : choosing ? 1 : 3;
 
   const heading =
-    phase === "recording" || phase === "finalizing"
+    phase === "recording"
       ? "Recording"
-      : phase === "review"
-        ? "Ready to share"
-        : inSession
-          ? modeInfo(mode).label
-          : "New recording";
+      : phase === "finalizing"
+        ? "Almost done"
+        : phase === "review"
+          ? "Wrap up"
+          : phase === "starting"
+            ? "Getting ready"
+            : liveSession
+              ? modeInfo(mode).label
+              : "New recording";
 
   const subline =
     phase === "recording"
       ? "Uploading as you go — mute your mic or drop the camera at any time."
       : phase === "finalizing"
-        ? "Sending the last of it to storage…"
+        ? "Hang tight while we finish saving this take."
         : phase === "review"
-          ? "The link below is live. Anyone you send it to can watch — no account needed."
+          ? "Name it, then copy the link."
           : phase === "starting"
-            ? "Opening the upload…"
+            ? "Opening secure upload…"
             : phase === "preparing"
               ? "Approve the browser permission prompt to continue."
-              : inSession
+              : liveSession
                 ? "Check the framing, then start when you're ready."
                 : outOfCredits
                   ? creditsDetail
@@ -88,7 +90,7 @@ export function Recorder({
   return (
     <section className="flex flex-1 flex-col gap-7">
       <header className="animate-rise flex flex-col gap-4">
-        {(choosing || inSession) && !outOfCredits && <StepIndicator current={step} />}
+        {(choosing || liveSession) && !outOfCredits && <StepIndicator current={step} />}
         <div>
           <h1 className="page-title">{heading}</h1>
           <p className="page-sub max-w-xl">{subline}</p>
@@ -96,11 +98,7 @@ export function Recorder({
       </header>
 
       {outOfCredits && choosing && (
-        <Banner
-          tone="error"
-          title="No credits left"
-          message={creditsDetail}
-        />
+        <Banner tone="error" title="No credits left" message={creditsDetail} />
       )}
 
       {recorder.error && (
@@ -118,7 +116,7 @@ export function Recorder({
         />
       ) : null}
 
-      {inSession && (
+      {liveSession && mode !== null && (
         <div className="animate-rise flex flex-col gap-4">
           <PreviewStage
             mode={mode}
@@ -137,14 +135,14 @@ export function Recorder({
             onBubbleLayoutChange={recorder.setBubbleLayout}
           />
 
-          {(phase === "recording" || phase === "finalizing") && (
+          {phase === "recording" && (
             <UploadMeter
               uploadedBytes={recorder.upload.uploadedBytes}
               capturedBytes={recorder.upload.capturedBytes}
               bufferedBytes={recorder.upload.bufferedBytes}
               partBytes={recorder.upload.partBytes}
               deferredParts={recorder.upload.partsDeferred}
-              finalizing={phase === "finalizing"}
+              finalizing={false}
             />
           )}
 
@@ -161,6 +159,16 @@ export function Recorder({
             onCancel={recorder.reset}
           />
         </div>
+      )}
+
+      {phase === "finalizing" && (
+        <FinishingPanel
+          uploadedBytes={recorder.upload.uploadedBytes}
+          capturedBytes={recorder.upload.capturedBytes}
+          bufferedBytes={recorder.upload.bufferedBytes}
+          partBytes={recorder.upload.partBytes}
+          deferredParts={recorder.upload.partsDeferred}
+        />
       )}
 
       {phase === "review" && recorder.result && (

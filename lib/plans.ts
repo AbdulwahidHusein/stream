@@ -5,12 +5,17 @@
 
 export type PlanId = "free" | "individual";
 
+/**
+ * Fixed encoder targets (§6.1 / §10.3).
+ * 2 Mbps video is the spec's recommended bump when 1.5 Mbps smears UI text;
+ * 128 kbps audio keeps voice clear without dominating storage.
+ */
 export const BITRATE = {
-  videoBps: 1_500_000,
-  audioBps: 96_000,
+  videoBps: 2_000_000,
+  audioBps: 128_000,
 } as const;
 
-/** ~12 MB/min at configured bitrates (see §6.1). */
+/** ~16 MB/min at configured bitrates. */
 export const BYTES_PER_MINUTE =
   ((BITRATE.videoBps + BITRATE.audioBps) / 8) * 60;
 

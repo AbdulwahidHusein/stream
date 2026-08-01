@@ -197,9 +197,13 @@ function emit(): void {
     canvas.height = height;
   }
 
+  // Screen UI text stays sharper when the 2D path doesn't soften edges on scale.
+  ctx.imageSmoothingEnabled = false;
   ctx.drawImage(screen, 0, 0, width, height);
 
   if (cameraVisible && latestCamera) {
+    // Camera is scaled into the bubble — bilinear looks better than nearest.
+    ctx.imageSmoothingEnabled = true;
     drawCameraBubble(
       ctx,
       latestCamera,

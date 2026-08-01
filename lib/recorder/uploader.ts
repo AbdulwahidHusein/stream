@@ -49,6 +49,7 @@ export interface UploadProgress {
 }
 
 export interface CompletedUpload {
+  id: string;
   publicId: string;
   title: string;
   shareUrl: string;
@@ -246,6 +247,7 @@ export class ChunkUploader {
 
     const { recording } = body as {
       recording: {
+        id?: string;
         publicId: string;
         title: string;
         shareUrl: string;
@@ -256,6 +258,7 @@ export class ChunkUploader {
     };
 
     return {
+      id: recording.id ?? this.session.id,
       publicId: recording.publicId,
       title: recording.title,
       shareUrl: recording.shareUrl,

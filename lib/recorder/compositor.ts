@@ -124,10 +124,12 @@ export async function createPreviewCompositor(options: {
 
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
 
     if (!cameraVisible || !cameraVideo.videoWidth) return;
 
+    ctx.imageSmoothingEnabled = true;
     drawCameraBubble(
       ctx,
       cameraVideo,

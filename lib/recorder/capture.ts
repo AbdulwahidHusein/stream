@@ -1,5 +1,10 @@
 import { CAPTURE } from "@/lib/plans";
 import { captureFailure, describeMediaError, type RecorderError } from "./errors";
+import {
+  hintMicTrack,
+  sharpenCameraTrack,
+  sharpenScreenTrack,
+} from "./quality";
 import type { RecordMode } from "./types";
 
 /**
@@ -9,8 +14,9 @@ import type { RecordMode } from "./types";
  */
 
 const screenVideoConstraints: MediaTrackConstraints = {
-  width: { max: CAPTURE.maxWidth },
-  height: { max: CAPTURE.maxHeight },
+  // `ideal` matters: `max` alone often leaves Chrome on a soft default scale.
+  width: { ideal: CAPTURE.maxWidth, max: CAPTURE.maxWidth },
+  height: { ideal: CAPTURE.maxHeight, max: CAPTURE.maxHeight },
   frameRate: { ideal: CAPTURE.maxFrameRate, max: CAPTURE.maxFrameRate },
 };
 
@@ -25,6 +31,8 @@ const micConstraints: MediaTrackConstraints = {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
+  channelCount: { ideal: 1 },
+  sampleRate: { ideal: 48_000 },
 };
 
 export interface CaptureSession {
@@ -56,14 +64,26 @@ async function getScreenStream(): Promise<MediaStream> {
   const devices = navigator.mediaDevices;
   try {
     // Ask for system audio; browsers that can't provide it simply return no audio track.
-    return await devices.getDisplayMedia({ video: screenVideoConstraints, audio: true });
+    return await devices.getDisplayMedia({
+      video: screenVideoConstraints,
+      audio: {
+        // Prefer raw tab/system audio when the browser exposes the knobs.
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+    });
   } catch (err) {
     // A denial or a cancelled picker is final — only a capability failure is worth retrying.
     if (isPermissionError(err)) throw captureFailure(err, "screen");
     try {
-      return await devices.getDisplayMedia({ video: screenVideoConstraints });
-    } catch (retryErr) {
-      throw captureFailure(retryErr, "screen");
+      return await devices.getDisplayMedia({ video: screenVideoConstraints, audio: true });
+    } catch {
+      try {
+        return await devices.getDisplayMedia({ video: screenVideoConstraints });
+      } catch (retryErr) {
+        throw captureFailure(retryErr, "screen");
+      }
     }
   }
 }
@@ -130,18 +150,24 @@ export async function acquireCapture(mode: RecordMode): Promise<CaptureSession> 
     throw err;
   }
 
+  const screenTrack = screenStream?.getVideoTracks()[0] ?? null;
+  const cameraTrack = cameraStream?.getVideoTracks()[0] ?? null;
   const micTrack =
     micStream?.getAudioTracks()[0] ?? cameraStream?.getAudioTracks()[0] ?? null;
-  const cameraTrack = cameraStream?.getVideoTracks()[0] ?? null;
+  const systemAudioTrack = screenStream?.getAudioTracks()[0] ?? null;
+
+  if (screenTrack) await sharpenScreenTrack(screenTrack);
+  if (cameraTrack) await sharpenCameraTrack(cameraTrack);
+  if (micTrack) hintMicTrack(micTrack);
 
   return {
     mode,
     screenStream,
     cameraStream,
-    screenTrack: screenStream?.getVideoTracks()[0] ?? null,
+    screenTrack,
     cameraTrack,
     micTrack,
-    systemAudioTrack: screenStream?.getAudioTracks()[0] ?? null,
+    systemAudioTrack,
     micIssue,
     setMicEnabled(enabled: boolean) {
       // A disabled track emits silence, which is also what the WebAudio mix receives.
@@ -174,17 +200,30 @@ export function mixAudioTracks(tracks: MediaStreamTrack[]): MixedAudio {
   const live = tracks.filter((track) => track.readyState === "live");
 
   if (live.length === 0) return { track: null, dispose: () => {} };
-  if (live.length === 1) return { track: live[0], dispose: () => {} };
+  if (live.length === 1) {
+    hintMicTrack(live[0]);
+    return { track: live[0], dispose: () => {} };
+  }
 
-  const context = new AudioContext();
+  const context = new AudioContext({
+    latencyHint: "interactive",
+    sampleRate: 48_000,
+  });
   const destination = context.createMediaStreamDestination();
 
   for (const track of live) {
     context.createMediaStreamSource(new MediaStream([track])).connect(destination);
   }
 
+  // Autoplay policies can leave the graph suspended until a user gesture — we
+  // are inside one (Start recording), so resume explicitly.
+  void context.resume().catch(() => {});
+
+  const mixed = destination.stream.getAudioTracks()[0] ?? null;
+  if (mixed) hintMicTrack(mixed);
+
   return {
-    track: destination.stream.getAudioTracks()[0] ?? null,
+    track: mixed,
     dispose: () => void context.close().catch(() => {}),
   };
 }

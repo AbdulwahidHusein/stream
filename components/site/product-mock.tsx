@@ -1,78 +1,76 @@
 /**
- * Static product atmosphere for the marketing hero — reads as the real app shell
- * without interactive chrome or feature-card clutter.
+ * Dominant product atmosphere for the marketing hero — reads as the live
+ * recorder, not a feature collage.
  */
 export function ProductMock() {
   return (
     <div
       aria-hidden
-      className="relative h-full min-h-[420px] w-full overflow-hidden md:min-h-0"
+      className="relative h-full min-h-[380px] w-full overflow-hidden sm:min-h-[440px] lg:min-h-0"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_70%_40%,rgba(15,110,106,0.18),transparent_65%),linear-gradient(160deg,#e8eef2_0%,#dfe6ec_45%,#cfd8e2_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_80%_at_72%_38%,rgba(15,110,106,0.2),transparent_62%),linear-gradient(155deg,#eef2f5_0%,#e4eaef_48%,#d5dde6_100%)]" />
 
-      <div className="absolute inset-y-[8%] right-[-8%] left-[18%] flex shadow-[var(--shadow-float)] sm:left-[28%] md:inset-y-[10%] md:left-[22%] lg:left-[18%]">
-        {/* Sidebar rail */}
-        <div className="flex w-[72px] shrink-0 flex-col border-r border-[var(--line)] bg-[var(--panel)] sm:w-[120px] md:w-[150px]">
-          <div className="px-3 py-4 font-[family-name:var(--font-display)] text-sm font-bold tracking-tight sm:text-base">
+      {/* Floating app window */}
+      <div className="absolute inset-y-[7%] right-[-6%] left-[12%] flex flex-col overflow-hidden rounded-[12px] border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-float)] sm:left-[22%] md:inset-y-[9%] md:left-[16%] lg:left-[12%]">
+        {/* Title bar */}
+        <div className="flex items-center gap-3 border-b border-[var(--line)] px-4 py-3">
+          <div className="flex gap-1.5">
+            <span className="size-2 rounded-full bg-[var(--line-strong)]" />
+            <span className="size-2 rounded-full bg-[var(--line-strong)]" />
+            <span className="size-2 rounded-full bg-[var(--line-strong)]" />
+          </div>
+          <span className="font-[family-name:var(--font-display)] text-sm font-bold tracking-tight">
             Stream
-          </div>
-          <div className="mx-2 mt-2 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] px-2.5 py-2">
-            <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-[var(--record)]" />
-              <span className="hidden text-xs font-medium text-[var(--accent)] sm:inline">
-                Record
-              </span>
-            </div>
-          </div>
-          <div className="mx-2 mt-1 rounded-[var(--radius-sm)] px-2.5 py-2">
-            <span className="hidden text-xs text-[var(--ink-faint)] sm:inline">Library</span>
-            <span className="block size-2 rounded-sm bg-[var(--line-strong)] sm:hidden" />
-          </div>
-          <div className="mt-auto border-t border-[var(--line)] p-3">
-            <div className="flex items-center gap-2">
-              <span className="size-7 rounded-full bg-[var(--panel-muted)]" />
-              <div className="hidden flex-1 sm:block">
-                <div className="h-2 w-14 rounded-full bg-[var(--panel-muted)]" />
-                <div className="mt-1.5 h-1.5 w-10 rounded-full bg-[var(--line)]" />
-              </div>
-            </div>
-          </div>
+          </span>
+          <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-wide text-[var(--ink-faint)] sm:inline">
+            Screen + camera
+          </span>
         </div>
 
-        {/* Main canvas */}
-        <div className="flex min-w-0 flex-1 flex-col bg-[var(--bg)] p-4 sm:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex size-5 items-center justify-center rounded-full bg-[var(--accent)] font-mono text-[9px] text-white">
-              1
-            </span>
-            <span className="text-xs font-medium text-[var(--ink)]">Choose what to capture</span>
+        <div className="flex min-h-0 flex-1">
+          {/* Slim rail */}
+          <div className="hidden w-[52px] shrink-0 flex-col border-r border-[var(--line)] bg-[var(--panel-muted)]/60 py-3 sm:flex">
+            <div className="mx-auto mb-2 flex size-8 items-center justify-center rounded-[8px] bg-[var(--accent-soft)]">
+              <span className="size-2 rounded-full bg-[var(--record)]" />
+            </div>
+            <div className="mx-auto size-8 rounded-[8px]" />
+            <div className="mx-auto mt-auto size-7 rounded-full bg-[var(--line)]" />
           </div>
-          <div className="mb-3 h-5 w-36 rounded-md bg-[var(--ink)]/10" />
-          <div className="mb-5 h-3 w-48 rounded-full bg-[var(--line)]" />
 
-          <div className="grid flex-1 grid-cols-3 gap-2.5">
-            {["Screen", "Camera", "Both"].map((label, i) => (
-              <div
-                key={label}
-                className={`flex flex-col gap-2 rounded-[var(--radius)] border bg-[var(--panel)] p-3 shadow-[var(--shadow-panel)] ${
-                  i === 0 ? "border-[var(--accent)] ring-2 ring-[var(--accent-soft)]" : "border-[var(--line)]"
-                }`}
-              >
-                <div
-                  className={`size-8 rounded-[var(--radius-sm)] ${
-                    i === 0 ? "bg-[var(--accent-soft)]" : "bg-[var(--panel-muted)]"
-                  }`}
-                />
-                <div className="h-2.5 w-12 rounded-full bg-[var(--ink)]/15" />
-                <div className="h-2 w-full rounded-full bg-[var(--line)]" />
-                <div className="h-2 w-3/4 rounded-full bg-[var(--line)]" />
+          {/* Stage */}
+          <div className="flex min-w-0 flex-1 flex-col gap-3 p-3 sm:p-4">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[8px] bg-[#0a0e14] ring-1 ring-black/10">
+              {/* Fake screen content */}
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,#141a24_0%,#0a0e14_100%)]" />
+              <div className="absolute inset-x-8 top-8 bottom-16 rounded-md border border-white/5 bg-white/[0.03]" />
+              <div className="absolute left-12 top-14 h-2 w-1/3 rounded-full bg-white/10" />
+              <div className="absolute left-12 top-20 h-1.5 w-1/2 rounded-full bg-white/5" />
+              <div className="absolute left-12 top-28 right-12 bottom-20 rounded border border-white/[0.04] bg-white/[0.02]" />
+
+              {/* Camera bubble */}
+              <div className="absolute bottom-4 right-4 size-16 overflow-hidden rounded-full border-2 border-white/80 shadow-lg sm:size-20">
+                <div className="h-full w-full bg-[radial-gradient(circle_at_35%_30%,#6b7c8f,#2a3340_70%)]" />
               </div>
-            ))}
+
+              {/* REC chip */}
+              <div className="absolute left-3 top-3 flex items-center gap-2 rounded-md bg-black/55 px-2.5 py-1.5 backdrop-blur-sm">
+                <span className="animate-record-pulse size-1.5 rounded-full bg-[var(--record)]" />
+                <span className="font-mono text-[11px] tabular-nums text-white">02:14</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 px-0.5">
+              <div className="flex gap-2">
+                <span className="h-8 w-16 rounded-[6px] border border-[var(--line)] bg-[var(--panel)]" />
+                <span className="h-8 w-16 rounded-[6px] border border-[var(--line)] bg-[var(--panel)]" />
+              </div>
+              <span className="h-9 w-28 rounded-[6px] bg-[var(--record)] shadow-sm" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-[var(--bg)] via-[var(--bg)]/80 to-transparent md:w-2/5" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-[28%] bg-gradient-to-r from-[var(--bg)] via-[var(--bg)]/85 to-transparent lg:w-[34%]" />
     </div>
   );
 }

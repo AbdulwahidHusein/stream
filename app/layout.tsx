@@ -22,11 +22,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Stream — Async screen recording for Ethiopia",
+    default: "Stream — Record your screen. Share a link.",
     template: "%s · Stream",
   },
   description:
-    "Record your screen in the browser. Get an instant shareable link. Billed in ETB via Telebirr and CBE Birr.",
+    "Record your screen in the browser and share an instant link. No install needed to watch.",
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
 };
 
