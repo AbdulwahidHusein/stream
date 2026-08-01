@@ -24,6 +24,11 @@
       "binding": "VIDEOS",
       "bucket_name": "stream-videos"
     }
+  ],
+  // Apex custom domain — Cloudflare creates the proxied A/AAAA + SSL.
+  // Without this, stream.et has NS only and browsers show NXDOMAIN.
+  "routes": [
+    { "pattern": "stream.et", "custom_domain": true }
   ]
   // No `triggers` here on purpose: the §6.2 purge runs as its own Worker so a
   // cron change cannot break the app deploy. See `workers/purge/wrangler.jsonc`.

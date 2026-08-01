@@ -4,16 +4,20 @@ import { SESSION_COOKIE, sessionCookie } from "@/lib/auth/cookies";
 /**
  * Optimistic route guard (§7).
  *
- * Cookie presence only — no database. Proxy runs on every request including
- * prefetches, so a D1 round trip here would be paid dozens of times per page
- * for an answer the page is about to compute properly anyway. This exists to
- * bounce signed-out visitors at the edge and to slide the cookie; the real
- * authorization is `requirePageUser` / `requireUser` next to the data.
+ * Cookie presence only — no database. This runs on every matched request
+ * including prefetches, so a D1 round trip here would be paid dozens of times
+ * per page for an answer the page is about to compute properly anyway. This
+ * exists to bounce signed-out visitors at the edge and to slide the cookie;
+ * the real authorization is `requirePageUser` / `requireUser` next to the data.
+ *
+ * Kept as Edge `middleware.ts` (not Next 16 `proxy.ts`) because
+ * `@opennextjs/cloudflare@1.20.2` refuses Node.js middleware at build time.
+ * When the adapter supports proxy.ts, prefer migrating back.
  */
 
 const PROTECTED = ["/record", "/library"];
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
 

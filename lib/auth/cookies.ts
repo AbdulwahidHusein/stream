@@ -1,9 +1,10 @@
 /**
  * Cookie names and shapes for §7.2.
  *
- * Deliberately dependency-free: `proxy.ts` imports this, and Proxy runs ahead of
- * the app on every request, so anything it pulls in — `next/headers`, Drizzle,
- * the D1 client — would be paid for on requests that never touch a session.
+ * Deliberately dependency-free: `middleware.ts` imports this, and middleware
+ * runs ahead of the app on every request, so anything it pulls in —
+ * `next/headers`, Drizzle, the D1 client — would be paid for on requests that
+ * never touch a session.
  */
 
 export const SESSION_COOKIE = "stream_session";
