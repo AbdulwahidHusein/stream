@@ -7,15 +7,15 @@ export type PlanId = "free" | "individual";
 
 /**
  * Fixed encoder targets (§6.1 / §10.3).
- * 2 Mbps video is the spec's recommended bump when 1.5 Mbps smears UI text;
- * 128 kbps audio keeps voice clear without dominating storage.
+ * 3 Mbps video keeps UI text and UI chrome sharp for client-facing shares;
+ * 160 kbps AAC/Opus keeps voice clear. Storage ~24 MB/min — still fine for R2.
  */
 export const BITRATE = {
-  videoBps: 2_000_000,
-  audioBps: 128_000,
+  videoBps: 3_000_000,
+  audioBps: 160_000,
 } as const;
 
-/** ~16 MB/min at configured bitrates. */
+/** ~24 MB/min at configured bitrates. */
 export const BYTES_PER_MINUTE =
   ((BITRATE.videoBps + BITRATE.audioBps) / 8) * 60;
 
@@ -31,7 +31,7 @@ export const PLANS = {
   free: {
     id: "free" as const,
     recordingsPerMonth: 15,
-    maxDurationMs: 5 * 60_000,
+    maxDurationMs: 10 * 60_000,
     linkTtlDays: 7,
     watermark: true,
     maxStorageBytes: null as number | null,

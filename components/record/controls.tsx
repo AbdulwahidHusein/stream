@@ -1,7 +1,15 @@
 "use client";
 
 import type { RecorderPhase } from "@/lib/recorder/use-recorder";
-import { CameraIcon, CameraOffIcon, MicIcon, MicOffIcon, StopIcon } from "./icons";
+import {
+  CameraIcon,
+  CameraOffIcon,
+  MicIcon,
+  MicOffIcon,
+  PauseIcon,
+  ResumeIcon,
+  StopIcon,
+} from "./icons";
 
 function Toggle({
   on,
@@ -47,9 +55,12 @@ export function Controls({
   cameraEnabled,
   hasMic,
   hasCamera,
+  canPause,
   onToggleMic,
   onToggleCamera,
   onStart,
+  onPause,
+  onResume,
   onStop,
   onCancel,
 }: {
@@ -58,13 +69,18 @@ export function Controls({
   cameraEnabled: boolean;
   hasMic: boolean;
   hasCamera: boolean;
+  canPause: boolean;
   onToggleMic: () => void;
   onToggleCamera: () => void;
   onStart: () => void;
+  onPause: () => void;
+  onResume: () => void;
   onStop: () => void;
   onCancel: () => void;
 }) {
   const isRecording = phase === "recording";
+  const isPaused = phase === "paused";
+  const isLive = isRecording || isPaused;
   const isFinalizing = phase === "finalizing";
   const isStarting = phase === "starting";
 
@@ -95,18 +111,34 @@ export function Controls({
         )}
       </div>
 
-      <div className="flex items-center gap-4">
-        {!isRecording && !isFinalizing && !isStarting && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn-ghost"
-          >
+      <div className="flex items-center gap-3">
+        {!isLive && !isFinalizing && !isStarting && (
+          <button type="button" onClick={onCancel} className="btn-ghost">
             Change mode
           </button>
         )}
 
-        {isRecording || isFinalizing ? (
+        {isLive && canPause && (
+          <button
+            type="button"
+            onClick={isPaused ? onResume : onPause}
+            className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-[var(--ink)] transition-colors hover:border-[var(--line-strong)] hover:bg-[var(--panel-muted)]"
+          >
+            {isPaused ? (
+              <>
+                <ResumeIcon className="size-3.5" />
+                Resume
+              </>
+            ) : (
+              <>
+                <PauseIcon className="size-3.5" />
+                Pause
+              </>
+            )}
+          </button>
+        )}
+
+        {isLive || isFinalizing ? (
           <button
             type="button"
             onClick={onStop}

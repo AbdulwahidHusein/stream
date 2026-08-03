@@ -67,6 +67,17 @@ async function serve(
   // by intermediaries beyond what the unguessable public id already implies.
   headers.set("Cache-Control", "private, max-age=3600");
 
+  const wantsDownload =
+    new URL(request.url).searchParams.get("download") === "1";
+  if (wantsDownload && requested === null) {
+    // Full-object download only — Range + attachment confuses many browsers.
+    const ext = extensionFor(contentType);
+    headers.set(
+      "Content-Disposition",
+      `attachment; filename="${safeFilename(recording.row.title, ext)}"`,
+    );
+  }
+
   const resolved = resolveRange(object.range, object.size);
   const partial = requested !== null;
 
@@ -81,6 +92,24 @@ async function serve(
   }
 
   return new Response(object.body, { status: partial ? 206 : 200, headers });
+}
+
+function extensionFor(contentType: string): string {
+  if (contentType.includes("webm")) return "webm";
+  if (contentType.includes("mp4")) return "mp4";
+  return "mp4";
+}
+
+/** ASCII filename safe for Content-Disposition (no path separators / quotes). */
+function safeFilename(title: string, ext: string): string {
+  const base = title
+    .trim()
+    .replace(/[^\w\s.-]+/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+  return `${base || "recording"}.${ext}`;
 }
 
 /**

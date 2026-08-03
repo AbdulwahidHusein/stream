@@ -58,6 +58,7 @@ export type RecorderPhase =
   | "ready"
   | "starting"
   | "recording"
+  | "paused"
   | "finalizing"
   | "review";
 
@@ -125,10 +126,37 @@ export function useRecorder(plan: PlanId) {
   const uploaderRef = useRef<ChunkUploader | null>(null);
   const posterRef = useRef<Blob | null>(null);
   const posterTimerRef = useRef<number | null>(null);
-  const startedAtRef = useRef(0);
+  /** Wall clock when the current recording segment started (start or resume). */
+  const segmentStartedAtRef = useRef(0);
+  /** Active recording time accumulated across previous pause/resume segments. */
+  const accumulatedMsRef = useRef(0);
   const stoppedAtRef = useRef(0);
   const tickRef = useRef<number | null>(null);
   const autoStopRef = useRef<number | null>(null);
+  // Filled after `stop` is defined so auto-stop can call it without a cycle.
+  const stopRef = useRef<(() => void) | null>(null);
+
+  const activeElapsedMs = useCallback(() => {
+    if (phaseRef.current === "paused") return accumulatedMsRef.current;
+    if (
+      phaseRef.current === "recording" ||
+      phaseRef.current === "finalizing"
+    ) {
+      return (
+        accumulatedMsRef.current + (Date.now() - segmentStartedAtRef.current)
+      );
+    }
+    return accumulatedMsRef.current;
+  }, []);
+
+  const armAutoStop = useCallback(() => {
+    if (autoStopRef.current !== null) window.clearTimeout(autoStopRef.current);
+    const remaining = Math.max(0, limits.maxDurationMs - activeElapsedMs());
+    autoStopRef.current = window.setTimeout(() => {
+      setAutoStopped(true);
+      stopRef.current?.();
+    }, remaining);
+  }, [activeElapsedMs, limits.maxDurationMs]);
 
   const toPhase = useCallback((next: RecorderPhase) => {
     phaseRef.current = next;
@@ -161,11 +189,59 @@ export function useRecorder(plan: PlanId) {
   const stop = useCallback(() => {
     const recorder = recorderRef.current;
     if (!recorder || recorder.state === "inactive") return;
+    // Fold the open segment into the total before we leave "recording".
+    if (phaseRef.current === "recording") {
+      accumulatedMsRef.current += Date.now() - segmentStartedAtRef.current;
+    }
     stoppedAtRef.current = Date.now();
     clearTimers();
     toPhase("finalizing");
+    // Resume first if paused — some browsers won't flush a final chunk from paused.
+    if (recorder.state === "paused") {
+      try {
+        recorder.resume();
+      } catch {
+        // Best-effort; stop below still ends the take.
+      }
+    }
     recorder.stop(); // flushes a final dataavailable, then onstop
   }, [clearTimers, toPhase]);
+
+  stopRef.current = stop;
+
+  const pause = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder || phaseRef.current !== "recording") return;
+    if (typeof recorder.pause !== "function" || recorder.state !== "recording") return;
+
+    accumulatedMsRef.current += Date.now() - segmentStartedAtRef.current;
+    setElapsedMs(accumulatedMsRef.current);
+    recorder.pause();
+    if (tickRef.current !== null) {
+      window.clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+    if (autoStopRef.current !== null) {
+      window.clearTimeout(autoStopRef.current);
+      autoStopRef.current = null;
+    }
+    toPhase("paused");
+  }, [toPhase]);
+
+  const resume = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder || phaseRef.current !== "paused") return;
+    if (typeof recorder.resume !== "function" || recorder.state !== "paused") return;
+
+    recorder.resume();
+    segmentStartedAtRef.current = Date.now();
+    toPhase("recording");
+
+    tickRef.current = window.setInterval(() => {
+      setElapsedMs(activeElapsedMs());
+    }, 200);
+    armAutoStop();
+  }, [activeElapsedMs, armAutoStop, toPhase]);
 
   const finalize = useCallback(
     async (
@@ -174,7 +250,8 @@ export function useRecorder(plan: PlanId) {
       recordedMode: RecordMode,
       cameraInFile: boolean,
     ) => {
-      const durationMs = Math.max(0, stoppedAtRef.current - startedAtRef.current);
+      // Active recording time only — paused gaps do not count against the plan.
+      const durationMs = Math.max(0, Math.round(accumulatedMsRef.current));
 
       recorderRef.current = null;
       // Devices go back to the user the moment encoding stops — the remaining work
@@ -286,7 +363,11 @@ export function useRecorder(plan: PlanId) {
 
   const handleScreenEnded = useCallback(() => {
     // The browser's own "Stop sharing" bar is a legitimate way to end a take.
-    if (phaseRef.current === "recording" || phaseRef.current === "finalizing") {
+    if (
+      phaseRef.current === "recording" ||
+      phaseRef.current === "paused" ||
+      phaseRef.current === "finalizing"
+    ) {
       stop();
       return;
     }
@@ -302,7 +383,13 @@ export function useRecorder(plan: PlanId) {
 
   const chooseMode = useCallback(
     async (next: RecordMode) => {
-      if (phaseRef.current === "preparing" || phaseRef.current === "recording") return;
+      if (
+        phaseRef.current === "preparing" ||
+        phaseRef.current === "recording" ||
+        phaseRef.current === "paused"
+      ) {
+        return;
+      }
 
       setError(null);
       setNotice(null);
@@ -438,7 +525,7 @@ export function useRecorder(plan: PlanId) {
         // Backstop for the duration cap. Recording continues while the tab is
         // hidden, so the setTimeout below can be throttled by minutes — this
         // fires off the media pipeline, on the timeslice, throttling or not.
-        if (Date.now() - startedAtRef.current >= limits.maxDurationMs) {
+        if (activeElapsedMs() >= limits.maxDurationMs) {
           setAutoStopped(true);
           stop();
         }
@@ -464,7 +551,8 @@ export function useRecorder(plan: PlanId) {
         void finalize(negotiated, uploader, session.mode, cameraInFile);
 
       recorderRef.current = recorder;
-      startedAtRef.current = Date.now();
+      accumulatedMsRef.current = 0;
+      segmentStartedAtRef.current = Date.now();
       stoppedAtRef.current = Date.now();
       setElapsedMs(0);
       setResult(null);
@@ -482,21 +570,27 @@ export function useRecorder(plan: PlanId) {
       }, THUMBNAIL.atMs);
 
       tickRef.current = window.setInterval(() => {
-        setElapsedMs(Date.now() - startedAtRef.current);
+        setElapsedMs(activeElapsedMs());
       }, 200);
 
       // Client-side auto-stop for the plan cap; the server's real ceiling is size (§5.1.1).
-      autoStopRef.current = window.setTimeout(() => {
-        setAutoStopped(true);
-        stop();
-      }, limits.maxDurationMs);
+      armAutoStop();
     } catch (err) {
       void abortUploadSession(uploadSession);
       uploaderRef.current = null;
       setError(errorDetail(err));
       toPhase("ready");
     }
-  }, [clearTimers, finalize, limits.maxDurationMs, releaseCapture, stop, toPhase]);
+  }, [
+    activeElapsedMs,
+    armAutoStop,
+    clearTimers,
+    finalize,
+    limits.maxDurationMs,
+    releaseCapture,
+    stop,
+    toPhase,
+  ]);
 
   const toggleMic = useCallback(() => {
     const session = sessionRef.current;
@@ -543,6 +637,8 @@ export function useRecorder(plan: PlanId) {
     setHasMic(false);
     setHasCamera(false);
     setAutoStopped(false);
+    accumulatedMsRef.current = 0;
+    segmentStartedAtRef.current = 0;
     bubbleLayoutRef.current = DEFAULT_BUBBLE_LAYOUT;
     setBubbleLayoutState(DEFAULT_BUBBLE_LAYOUT);
     toPhase("idle");
@@ -564,13 +660,22 @@ export function useRecorder(plan: PlanId) {
   // Parts already in R2 survive a closed tab, but the un-uploaded tail and the
   // /complete call do not — so the take would still be lost.
   useEffect(() => {
-    if (phase !== "recording" && phase !== "finalizing") return;
+    if (
+      phase !== "recording" &&
+      phase !== "paused" &&
+      phase !== "finalizing"
+    ) {
+      return;
+    }
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [phase]);
 
   const remainingMs = Math.max(0, limits.maxDurationMs - elapsedMs);
+  const canPause =
+    typeof MediaRecorder !== "undefined" &&
+    typeof MediaRecorder.prototype.pause === "function";
 
   return {
     phase,
@@ -582,7 +687,9 @@ export function useRecorder(plan: PlanId) {
     remainingMs,
     maxDurationMs: limits.maxDurationMs,
     /** 80% of the cap — the warning threshold in §10.3. */
-    nearLimit: phase === "recording" && elapsedMs >= limits.maxDurationMs * 0.8,
+    nearLimit:
+      (phase === "recording" || phase === "paused") &&
+      elapsedMs >= limits.maxDurationMs * 0.8,
     autoStopped,
     micEnabled,
     cameraEnabled,
@@ -600,9 +707,13 @@ export function useRecorder(plan: PlanId) {
       upload.capturedBytes > 0
         ? Math.min(1, upload.uploadedBytes / upload.capturedBytes)
         : 0,
+    /** False on rare engines without MediaRecorder.pause — UI hides the control. */
+    canPause,
     chooseMode,
     start,
     stop,
+    pause,
+    resume,
     toggleMic,
     toggleCamera,
     reset,

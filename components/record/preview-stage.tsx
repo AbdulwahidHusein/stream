@@ -84,12 +84,18 @@ export function PreviewStage({
   }, [previewCanvas]);
 
   const isRecording = phase === "recording";
+  const isPaused = phase === "paused";
   const cameraOnly = mode === "camera";
   const info = modeInfo(mode);
   const bubbleIsPreviewOnly = info.usesCamera && info.usesScreen && !compositeActive;
   const showBubbleCaveat = bubbleIsPreviewOnly && hasCamera && cameraEnabled;
   const showBubbleEditor =
-    info.usesCamera && info.usesScreen && hasCamera && cameraEnabled && phase !== "finalizing";
+    info.usesCamera &&
+    info.usesScreen &&
+    hasCamera &&
+    cameraEnabled &&
+    phase !== "finalizing" &&
+    phase !== "paused";
 
   return (
     <>
@@ -122,7 +128,11 @@ export function PreviewStage({
           <div className="flex items-center gap-2 rounded-[var(--radius-sm)] bg-black/60 px-3 py-1.5 backdrop-blur-sm">
             <span
               className={`inline-block size-2 rounded-full ${
-                isRecording ? "animate-record-pulse bg-[var(--record)]" : "bg-white/40"
+                isRecording
+                  ? "animate-record-pulse bg-[var(--record)]"
+                  : isPaused
+                    ? "bg-amber-400"
+                    : "bg-white/40"
               }`}
             />
             <span className="font-mono text-sm tabular-nums text-white">
@@ -131,6 +141,11 @@ export function PreviewStage({
             <span className="font-mono text-xs text-white/50">
               / {formatDuration(maxDurationMs)}
             </span>
+            {isPaused && (
+              <span className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
+                Paused
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

@@ -51,7 +51,10 @@ export function Recorder({
 
   const liveSession =
     mode !== null &&
-    (phase === "ready" || phase === "starting" || phase === "recording");
+    (phase === "ready" ||
+      phase === "starting" ||
+      phase === "recording" ||
+      phase === "paused");
 
   const choosing = phase === "idle" || phase === "preparing";
   const step: 1 | 2 | 3 =
@@ -60,28 +63,32 @@ export function Recorder({
   const heading =
     phase === "recording"
       ? "Recording"
-      : phase === "finalizing"
-        ? "Almost done"
-        : phase === "review"
-          ? "Wrap up"
-          : phase === "starting"
-            ? "Getting ready"
-            : liveSession
-              ? modeInfo(mode).label
-              : "New recording";
+      : phase === "paused"
+        ? "Paused"
+        : phase === "finalizing"
+          ? "Almost done"
+          : phase === "review"
+            ? "Wrap up"
+            : phase === "starting"
+              ? "Getting ready"
+              : liveSession
+                ? modeInfo(mode).label
+                : "New recording";
 
   const subline =
     phase === "recording"
-      ? "Uploading as you go — mute your mic or drop the camera at any time."
-      : phase === "finalizing"
-        ? "Hang tight while we finish saving this take."
-        : phase === "review"
-          ? "Name it, then copy the link."
-          : phase === "starting"
-            ? "Opening secure upload…"
-            : phase === "preparing"
-              ? "Approve the browser permission prompt to continue."
-              : liveSession
+      ? "Uploading as you go — pause anytime, or mute mic / drop the camera."
+      : phase === "paused"
+        ? "Timer is frozen. Resume when you're ready — pause time doesn't count."
+        : phase === "finalizing"
+          ? "Hang tight while we finish saving this take."
+          : phase === "review"
+            ? "Name it, then copy the link."
+            : phase === "starting"
+              ? "Opening secure upload…"
+              : phase === "preparing"
+                ? "Approve the browser permission prompt to continue."
+                : liveSession
                 ? "Check the framing, then start when you're ready."
                 : outOfCredits
                   ? creditsDetail
@@ -135,7 +142,7 @@ export function Recorder({
             onBubbleLayoutChange={recorder.setBubbleLayout}
           />
 
-          {phase === "recording" && (
+          {(phase === "recording" || phase === "paused") && (
             <UploadMeter
               uploadedBytes={recorder.upload.uploadedBytes}
               capturedBytes={recorder.upload.capturedBytes}
@@ -152,9 +159,12 @@ export function Recorder({
             cameraEnabled={recorder.cameraEnabled}
             hasMic={recorder.hasMic}
             hasCamera={recorder.hasCamera}
+            canPause={recorder.canPause}
             onToggleMic={recorder.toggleMic}
             onToggleCamera={recorder.toggleCamera}
             onStart={() => void recorder.start()}
+            onPause={recorder.pause}
+            onResume={recorder.resume}
             onStop={recorder.stop}
             onCancel={recorder.reset}
           />

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DownloadButton } from "@/components/playback/download-button";
 import { Player } from "@/components/playback/player";
 import { MarketingHeader } from "@/components/site/marketing-header";
 import { currentUser } from "@/lib/auth/current-user";
@@ -99,14 +100,18 @@ export default async function PlaybackPage({ params }: Props) {
               />
             </div>
 
-            <h1 className="mt-6 page-title">{lookup.row.title}</h1>
-
-            <p className="mt-2 font-mono text-sm text-[var(--ink-faint)]">
-              {lookup.row.durationMs !== null && (
-                <>{formatDuration(lookup.row.durationMs)} · </>
-              )}
-              {publicId}
-            </p>
+            <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h1 className="page-title">{lookup.row.title}</h1>
+                <p className="mt-2 font-mono text-sm text-[var(--ink-faint)]">
+                  {lookup.row.durationMs !== null && (
+                    <>{formatDuration(lookup.row.durationMs)} · </>
+                  )}
+                  {publicId}
+                </p>
+              </div>
+              <DownloadButton href={`${mediaPath(publicId)}?download=1`} />
+            </div>
 
             {lookup.row.expiresAt !== null && (
               <p className="mt-5 text-sm text-[var(--ink-muted)]">
